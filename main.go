@@ -45,7 +45,7 @@ func main() {
 	})
 
 	c.OnRequest(func(r *colly.Request) {
-		r.Headers.Set("Cookie", os.Getenv("COOKIE"))
+		r.Headers.Set("Cookie", os.Getenv("MOTIONWORSHIP_COOKIE"))
 	})
 
 	c.OnResponse(func(r *colly.Response) {

@@ -11,6 +11,6 @@ go install github.com/tatthien/motionworship-dl
 ## Usage
 
 1. Before downloading video, you need to login to MotionWorship website and get the authentication cookie from that site.
-2. Export `COOKIE` environment variable.
+2. Export `MOTIONWORSHIP_COOKIE` environment variable.
 3. Run `motionworship-dl <motionworship-url>`. E.g: `motionworship-dl https://www.motionworship.com/vhs-glitch-collection/`
 
