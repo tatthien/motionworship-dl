@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gocolly/colly/v2"
+	"github.com/schollz/progressbar/v3"
 )
 
 const UrlRegex = `https:\/\/(www.)?motionworship.com\/download(-cloudfront)?\/?\?id=\w+\&type\=4`
@@ -45,22 +46,18 @@ func main() {
 
 	c.OnRequest(func(r *colly.Request) {
 		r.Headers.Set("Cookie", os.Getenv("COOKIE"))
-		fmt.Println("Visiting:", r.URL)
 	})
 
 	c.OnResponse(func(r *colly.Response) {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			fmt.Println(err)
+		if !strings.HasSuffix(r.Request.URL.Path, ".mp4") {
+			return
 		}
 
 		fileName := strings.Split(r.Request.URL.Path, "/")[len(strings.Split(r.Request.URL.Path, "/"))-1]
-		filePath := homeDir + "/Downloads/MotionWorship/" + fileName
-		fmt.Println("Downloading:", fileName, "->", filePath)
-		err = downloadFile(filePath, r.Request.URL.String())
 
+		err := downloadFile(fileName, r.Request.URL.String())
 		if err != nil {
-			fmt.Println("cannot download", r.Request.URL, err)
+			fmt.Println("Cannot download:", fileName, err)
 		}
 	})
 
@@ -68,12 +65,24 @@ func main() {
 	c.Wait()
 }
 
-func downloadFile(filePath, url string) error {
+func downloadFile(fileName, url string) error {
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
+
+	bar := progressbar.DefaultBytes(
+		resp.ContentLength,
+		"Downloading "+fileName,
+	)
+
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	filePath := fmt.Sprintf("%s/%s", currentDir, fileName)
 
 	out, err := os.Create(filePath)
 	if err != nil {
@@ -83,6 +92,6 @@ func downloadFile(filePath, url string) error {
 	defer out.Close()
 
 	// Write the body to file
-	_, err = io.Copy(out, resp.Body)
+	_, err = io.Copy(io.MultiWriter(out, bar), resp.Body)
 	return err
 }
